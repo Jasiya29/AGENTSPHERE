@@ -1,0 +1,23 @@
+<div id="alert-box" style="color: red; font-weight: bold;">
+    {% if error %} {{ error }} {% endif %}
+</div>
+<div class="form-group" style="margin-bottom: 15px;">
+    <label for="location">Your Current Location:</label>
+    <select name="location" id="location" class="form-control" required style="width: 100%; padding: 8px; border-radius: 4px;">
+        <option value="India">🇮🇳 India (Home Region)</option>
+        <option value="USA">🇺🇸 USA (International - Restricted)</option>
+    </select>
+</div>
+
+<div id="alert-box" style="color: red; font-weight: bold;">
+    {% if error %} {{ error }} {% endif %}
+</div>
+<script>
+    document.querySelector('form').onsubmit = function(e) {
+        let amount = document.getElementById('amount').value;
+        if (amount > 50000) {
+            alert("❌ Transaction Blocked: Maximum limit is ₹50,000.");
+            e.preventDefault(); // Stop the form from submitting
+        }
+    };
+</script>

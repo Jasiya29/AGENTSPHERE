@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Access Suspended | BOI</title>
+    <style>
+        body { background: #f4f7f6; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; }
+        .box { background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 10px solid #d9534f; max-width: 400px; }
+        .timer { font-size: 48px; font-weight: bold; color: #003366; margin: 20px 0; }
+        .btn { background: #003366; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: none; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2 style="color:#d9534f">Account Locked</h2>
+        <p>Too many failed attempts. Our AI Agent has temporarily suspended access for <b>60 seconds</b> to protect your funds.</p>
+        <div class="timer" id="time">{{ seconds }}</div>
+        <p>Security Analysis in Progress...</p>
+        <a href="/" id="btn" class="btn">Return to Login</a>
+    </div>
+   <div id="timer-config" data-seconds="{{ seconds }}" style="display: none;"></div>
+
+<div class="timer" id="time-display">0</div>
+
+<script>
+    // Pull the value from the data attribute instead of injecting directly into JS
+    const config = document.getElementById('timer-config');
+    let timeLeft = parseInt(config.getAttribute('data-seconds'));
+    const display = document.getElementById('time-display');
+
+    const countdown = setInterval(() => {
+        timeLeft--;
+        display.innerText = timeLeft;
+        
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            // logic to show button
+            document.getElementById('btn').style.display = 'inline-block';
+        }
+    }, 1000);
+</script>
+</body>
+</html>

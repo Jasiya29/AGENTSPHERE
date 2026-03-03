@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AgentSphere</title>
+    <style>
+        :root { --neon-blue: #58a6ff; --neon-red: #f85149; --neon-green: #3fb950; }
+        body { background: #0d1117; color: #c9d1d9; font-family: 'Segoe UI', monospace; padding: 40px; }
+        
+        .container { max-width: 1100px; margin: auto; display: flex; flex-direction: column; gap: 30px; }
+        
+        .panel { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        h1 { color: var(--neon-blue); text-align: center; letter-spacing: 2px; border-bottom: 2px solid #30363d; padding-bottom: 15px; }
+        h2 { font-size: 1.2rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: #8b949e; border-bottom: 1px solid #30363d; padding: 12px; font-size: 0.8rem; }
+        td { padding: 15px 12px; border-bottom: 1px solid #21262d; }
+
+        /* Dynamic Classes (No Jinja Logic in attributes) */
+        .status-success { color: var(--neon-green); font-weight: bold; }
+        .status-failure { color: #ffa500; font-weight: bold; }
+        .status-blocked { color: var(--neon-red); text-transform: uppercase; border: 1px solid var(--neon-red); padding: 2px 8px; border-radius: 4px; }
+        
+        .ai-reasoning { font-style: italic; color: #8b949e; }
+        .risk-score { color: var(--neon-red); font-weight: bold; }
+
+        .pulse { height: 10px; width: 10px; background: var(--neon-green); border-radius: 50%; display: inline-block; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>AGENTSPHERE</h1>
+
+    <div class="panel">
+        <h2><span class="pulse"></span> LIVE TRAFFIC MONITORING</h2>
+        <table>
+            <thead>
+                <tr><th>IP ADDRESS</th><th>USERNAME</th><th>ACTIVITY</th><th>STATUS</th></tr>
+            </thead>
+            <tbody>
+                {% for row in monitor %}
+                <tr>
+                    <td>{{ row.ip_address }}</td>
+                    <td><b>{{ row.username }}</b></td>
+                    <td>{{ row.activity }}</td>
+                    <td class="status-{{ row.status | lower }}">{{ row.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel" style="border-left: 5px solid var(--neon-blue);">
+        <h2>AI DEFENSE REASONING AGENT</h2>
+        <table>
+            <thead>
+                <tr><th>USER</th><th>RISK</th><th>AI AGENT REASONING</th><th>ACTION TAKEN</th></tr>
+            </thead>
+            <tbody>
+                {% for row in defense %}
+                <tr>
+                    <td>{{ row.username }}</td>
+                    <td class="risk-score">{{ row.risk_score }}%</td>
+                    <td class="ai-reasoning">"{{ row.ai_reasoning }}"</td>
+                    <td><span class="status-{{ row.action_taken | lower }}">{{ row.action_taken }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>setTimeout(() => location.reload(), 5000);</script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bank of India | Digital Banking</title>
+    <style>
+        :root { --boi-blue: #003366; --boi-orange: #ff9933; --bg: #f4f7f6; --danger: #dc3545; --warning: #ffc107; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
+        .header { background: var(--boi-blue); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid var(--boi-orange); }
+        .main-container { display: flex; flex: 1; }
+        .sidebar { width: 250px; background: white; border-right: 1px solid #ddd; padding: 20px 0; }
+        .sidebar a { display: block; padding: 15px 25px; color: var(--boi-blue); text-decoration: none; font-weight: 600; transition: 0.3s; }
+        .sidebar a:hover { background: #f0f4f8; border-left: 5px solid var(--boi-orange); }
+        .content { flex: 1; padding: 40px; overflow-y: auto; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 800px; margin-bottom: 20px; }
+        .balance-box { background: linear-gradient(135deg, #003366, #00509e); color: white; padding: 25px; border-radius: 15px; margin: 20px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { color: #666; font-size: 0.8rem; text-transform: uppercase; }
+        .btn { background: var(--boi-blue); color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        
+        /* Security Alert Styles */
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; text-align: center; }
+        .alert-danger { background-color: var(--danger); color: white; border: 1px solid #bd2130; }
+        .alert-warning { background-color: var(--warning); color: #856404; border: 1px solid #ffeeba; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>BANK OF INDIA</h1>
+        {% if session.user_id %} <span>Welcome, <b>{{ session.username }}</b></span> {% endif %}
+    </div>
+
+    <div class="main-container">
+        {% if view != 'login' and view != 'register' %}
+        <div class="sidebar">
+            <a href="/dashboard">🏠 Dashboard</a>
+            <a href="/statement">📜 Account Statement</a>
+            <a href="/logout">🚪 Secure Logout</a>
+        </div>
+        {% endif %}
+
+        <div class="content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ 'danger' if category == 'danger' else 'warning' }}">
+                    {{ message }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            {% if view == 'login' %}
+            <div class="card" style="margin: auto; width: 350px;">
+                <h2 style="color: var(--boi-blue)">Login</h2>
+                <form action="/login" method="POST">
+                    <input type="text" name="username" placeholder="Username" required>
+                    <input type="password" name="password" placeholder="Password" required>
+                    <button type="submit" class="btn">Sign In</button>
+                </form>
+                <p>New user? <a href="/register">Register here</a></p>
+            </div>
+
+            {% elif view == 'register' %}
+            <div class="card" style="margin: auto; width: 400px;">
+                <h2 style="color: var(--boi-blue)">Join Bank of India</h2>
+                <form action="/register" method="POST">
+                    <input type="text" name="acc_no" placeholder="Account Number" required>
+                    <input type="text" name="username" placeholder="Username" required>
+                    <input type="password" name="password" placeholder="Password" required>
+                    <input type="text" name="phone" placeholder="Phone Number" required>
+                    <button type="submit" class="btn">Create Account</button>
+                </form>
+            </div>
+
+            {% elif view == 'dashboard' %}
+            <div class="card">
+                <h2>Account Summary</h2>
+                <p>A/C Holder: <b>{{ user.username }}</b> | Account No: <b>{{ user.account_number }}</b></p>
+                <div class="balance-box">
+                    <span>Available Balance</span>
+              <h1 style="margin: 10px 0;">₹ {{ "{:,.2f}".format(user.balance | default(0)) }}</h1>
+                </div>
+
+                <h3>Quick Transfer</h3>
+                <form action="/transfer" method="POST" id="transferForm">
+                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                        <input type="text" name="description" placeholder="Recipient/Description" required>
+                        <input type="number" name="amount" id="amountInput" placeholder="Amount" required>
+                    </div>
+                    
+                    <label style="font-weight: bold; font-size: 0.9rem;">Current Transaction Location:</label>
+                    <select name="location" id="locationSelect" required>
+                        <option value="India">🇮🇳 India (Local)</option>
+                        <option value="USA">🇺🇸 USA (International - Restricted)</option>
+                    </select>
+
+                    <button type="submit" class="btn" style="margin-top: 10px;">Authorize Transfer</button>
+                </form>
+            </div>
+
+            {% elif view == 'statement' %}
+            <div class="card">
+                <h2>Transaction History</h2>
+                <table>
+                    <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th></tr></thead>
+                    <tbody>
+                        {% for t in transactions %}
+                        <tr>
+                            <td>{{ t.timestamp }}</td>
+                            <td>{{ t.description }}</td>
+                           <td class="text-{{ t.type|lower }}">
+    {{ t.type }}
+</td>
+                                {{ t.type }}
+                            </td>
+                            <td>₹{{ "{:,.2f}".format(t.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        const transferForm = document.getElementById('transferForm');
+        if (transferForm) {
+            transferForm.onsubmit = function(e) {
+                const amount = document.getElementById('amountInput').value;
+                const location = document.getElementById('locationSelect').value;
+
+                if (location === "USA") {
+                    return confirm("🚨 SECURITY ALERT: Initiating a transfer from a restricted international region (USA) will lead to an immediate Account Block for safety. Do you want to proceed?");
+                }
+
+                if (parseFloat(amount) > 50000) {
+                    alert("ℹ️ Large Transaction: Transfers over ₹50,000 are subject to AI Security Audit.");
+                }
+            };
+        }
+    </script>
+</body>
+</html>
