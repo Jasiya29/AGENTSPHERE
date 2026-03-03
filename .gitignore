@@ -1,0 +1,15 @@
+# Ignore the Environment Variables file (where your API key is)
+.env
+
+# Ignore Python's temporary cache files
+__pycache__/
+*.pyc
+
+# Ignore the virtual environment folder (it's too big for GitHub)
+venv/
+env/
+.venv/
+
+# Ignore database files if you are using SQLite locally
+*.sqlite3
+*.db
