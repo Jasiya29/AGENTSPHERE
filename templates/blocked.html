@@ -1,42 +1,195 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Access Suspended | BOI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Suspended | Bank of India</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background: #f4f7f6; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; }
-        .box { background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 10px solid #d9534f; max-width: 400px; }
-        .timer { font-size: 48px; font-weight: bold; color: #003366; margin: 20px 0; }
-        .btn { background: #003366; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: none; }
+        :root {
+            --primary-navy: #003366;
+            --alert-red: #d9534f;
+            --accent-orange: #ff9933;
+            --text-gray: #666;
+        }
+
+        body { 
+            background: #f4f7f6; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+        }
+
+        .box { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 15px; 
+            text-align: center; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+            border-top: 10px solid var(--alert-red); 
+            max-width: 450px; 
+            width: 90%;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .incident-id {
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            font-family: monospace;
+        }
+
+        .timer { 
+            font-size: 64px; 
+            font-weight: 800; 
+            color: var(--primary-navy); 
+            margin: 20px 0; 
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .btn { 
+            background: var(--primary-navy); 
+            color: white; 
+            padding: 14px 35px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            text-decoration: none; 
+            display: none; 
+            font-weight: bold; 
+            transition: 0.3s;
+        }
+        .btn:hover { background: #002244; transform: translateY(-2px); }
+
+        .sos-btn { 
+            background: var(--accent-orange); 
+            color: var(--primary-navy); 
+            padding: 14px 25px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 800; 
+            margin-top: 15px; 
+            display: inline-block; 
+            transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(255, 153, 51, 0.3);
+            width: 100%;
+        }
+        .sos-btn:hover { 
+            background: #e68a00; 
+            transform: translateY(-2px);
+        }
+        .sos-btn:disabled { 
+            background: #e0e0e0; 
+            color: #999;
+            cursor: not-allowed; 
+            box-shadow: none;
+        }
+
+        #status-msg { 
+            font-size: 14px; 
+            color: var(--text-gray); 
+            margin-top: 20px; 
+            font-style: italic; 
+            line-height: 1.5;
+        }
+
+        .icon-shield {
+            font-size: 50px;
+            color: var(--alert-red);
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
+
     <div class="box">
-        <h2 style="color:#d9534f">Account Locked</h2>
-        <p>Too many failed attempts. Our AI Agent has temporarily suspended access for <b>60 seconds</b> to protect your funds.</p>
-        <div class="timer" id="time">{{ seconds }}</div>
-        <p>Security Analysis in Progress...</p>
-        <a href="/" id="btn" class="btn">Return to Login</a>
-    </div>
-   <div id="timer-config" data-seconds="{{ seconds }}" style="display: none;"></div>
-
-<div class="timer" id="time-display">0</div>
-
-<script>
-    // Pull the value from the data attribute instead of injecting directly into JS
-    const config = document.getElementById('timer-config');
-    let timeLeft = parseInt(config.getAttribute('data-seconds'));
-    const display = document.getElementById('time-display');
-
-    const countdown = setInterval(() => {
-        timeLeft--;
-        display.innerText = timeLeft;
+        <div class="incident-id">LOCK_ID: BOI-{{ range(1000, 9999) | random }}-BLOCK</div>
         
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
-            // logic to show button
-            document.getElementById('btn').style.display = 'inline-block';
+        <i class="fas fa-user-shield icon-shield"></i>
+        <h2 style="color:var(--alert-red); margin: 0;">Access Suspended</h2>
+        <p style="color: #444; font-size: 15px; margin-top: 10px;">
+            The AgentSphere AI has detected high-velocity failed attempts or identity tampering.
+        </p>
+        
+        <div class="timer" id="time-display">300</div>
+        
+        <p id="status-msg">Seconds remaining until automatic system unlock.</p>
+
+        <div id="sos-section">
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 25px 0;">
+            <p style="font-size: 13px; font-weight: 600;">Is this a false positive?</p>
+            <p style="font-size: 12px; color: #777; margin-bottom: 15px;">Broadcast your identity context to the Strategic Security Agent.</p>
+            
+            <button onclick="sendSOS()" id="sos-btn" class="sos-btn">
+                <i class="fas fa-bullhorn"></i> REQUEST EMERGENCY OVERRIDE
+            </button>
+        </div>
+
+        <a href="/" id="return-btn" class="btn"><i class="fas fa-arrow-left"></i> Return to Login</a>
+    </div>
+
+    <script>
+        // Use the value passed from Flask or default to 300
+        let timeLeft = 300; 
+        const username = "{{ user }}"; 
+        
+        const display = document.getElementById('time-display');
+        const statusMsg = document.getElementById('status-msg');
+        const sosBtn = document.getElementById('sos-btn');
+        const returnBtn = document.getElementById('return-btn');
+
+        // Countdown Logic
+        const countdown = setInterval(() => {
+            if (timeLeft > 0) {
+                timeLeft--;
+                display.innerText = timeLeft;
+            }
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                display.innerText = "0";
+                display.style.color = "#28a745"; // Success green
+                returnBtn.style.display = 'inline-block';
+                sosBtn.style.display = 'none';
+                statusMsg.innerHTML = "<b>Lock expired.</b> You may now safely return to the login portal.";
+            }
+        }, 1000);
+
+        // Emergency SOS Signaling
+        function sendSOS() {
+            sosBtn.disabled = true;
+            sosBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ALERTING AGENT...';
+            statusMsg.innerText = "Transmitting SOS signal to AgentSphere Orchestrator...";
+
+            // Send request to the AgentSphere Port 5001
+            fetch('http://127.0.0.1:5001/sos_alert', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user: username || "Unknown_Subject",
+                    reason: "Manual Override Request: User claims legitimate access on Blocked Page."
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                sosBtn.innerHTML = '<i class="fas fa-check"></i> BROADCAST SENT';
+                statusMsg.innerHTML = "Signal Received. <b>Strategy Agent</b> is now reviewing your login pattern on the War Room Dashboard.";
+            })
+            .catch(err => {
+                console.error("SOS Error:", err);
+                statusMsg.innerText = "Direct connection to Defense Brain failed. Please wait for the cooldown.";
+            });
         }
-    }, 1000);
-</script>
+    </script>
 </body>
 </html>

@@ -1,71 +1,182 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>AgentSphere</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentSphere | AI War Room</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --neon-blue: #58a6ff; --neon-red: #f85149; --neon-green: #3fb950; }
-        body { background: #0d1117; color: #c9d1d9; font-family: 'Segoe UI', monospace; padding: 40px; }
-        
-        .container { max-width: 1100px; margin: auto; display: flex; flex-direction: column; gap: 30px; }
-        
-        .panel { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
-        h1 { color: var(--neon-blue); text-align: center; letter-spacing: 2px; border-bottom: 2px solid #30363d; padding-bottom: 15px; }
-        h2 { font-size: 1.2rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: #8b949e; border-bottom: 1px solid #30363d; padding: 12px; font-size: 0.8rem; }
-        td { padding: 15px 12px; border-bottom: 1px solid #21262d; }
+        :root { 
+            --neon-blue: #58a6ff; --neon-red: #f85149; --neon-green: #3fb950; 
+            --neon-orange: #ff9933; --bg-dark: #0d1117; --panel-bg: #161b22;
+            --border-color: #30363d;
+        }
 
-        /* Dynamic Classes (No Jinja Logic in attributes) */
-        .status-success { color: var(--neon-green); font-weight: bold; }
-        .status-failure { color: #ffa500; font-weight: bold; }
-        .status-blocked { color: var(--neon-red); text-transform: uppercase; border: 1px solid var(--neon-red); padding: 2px 8px; border-radius: 4px; }
+        body { 
+            background: var(--bg-dark); color: #c9d1d9; 
+            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; 
+        }
+
+        .container { max-width: 1400px; margin: auto; display: flex; flex-direction: column; gap: 20px; }
+
+        .header { text-align: center; padding: 20px; border-bottom: 2px solid var(--border-color); margin-bottom: 10px; }
+        .header h1 { 
+            color: var(--neon-blue); letter-spacing: 5px; margin: 0; font-size: 2.2rem;
+            text-transform: uppercase; text-shadow: 0 0 10px rgba(88, 166, 255, 0.3);
+        }
+
+        .panel { 
+            background: var(--panel-bg); border: 1px solid var(--border-color); 
+            border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); 
+            animation: fadeIn 0.5s ease-in-out;
+        }
         
-        .ai-reasoning { font-style: italic; color: #8b949e; }
-        .risk-score { color: var(--neon-red); font-weight: bold; }
+        h2 { font-size: 1.1rem; margin: 0 0 15px 0; display: flex; align-items: center; gap: 10px; color: var(--neon-blue); border-bottom: 1px solid #21262d; padding-bottom: 10px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: #8b949e; border-bottom: 1px solid var(--border-color); padding: 12px; font-size: 0.8rem; text-transform: uppercase; }
+        td { padding: 14px 12px; border-bottom: 1px solid #21262d; font-size: 0.9rem; }
+
+        .status-success, .status-allowed { color: var(--neon-green); font-weight: bold; }
+        .status-blocked, .status-failure, .status-critical { color: var(--neon-red); font-weight: bold; }
+        .status-pending { color: var(--neon-orange); font-weight: bold; }
+        
+        .risk-score { font-family: 'Courier New', monospace; font-weight: bold; font-size: 1.1rem; }
+        .risk-high { color: var(--neon-red); }
+        .risk-low { color: var(--neon-green); }
+
+        .ai-reasoning { font-style: italic; color: #8b949e; line-height: 1.5; font-size: 0.85rem; }
+        
+        .forensic-tag { 
+            background: rgba(248, 81, 73, 0.1); color: var(--neon-red); 
+            padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; 
+            font-weight: bold; border: 1px solid var(--neon-red);
+            margin-bottom: 5px; display: inline-block;
+        }
+
+        .sos-panel { border: 2px solid var(--neon-orange); background: rgba(255, 153, 51, 0.05); }
+        .btn-approve { 
+            background: var(--neon-green); color: white; border: none; padding: 8px 15px; 
+            border-radius: 6px; cursor: pointer; text-decoration: none; font-weight: bold; 
+            font-size: 0.8rem; transition: 0.3s; display: inline-block;
+        }
+        .btn-approve:hover { background: #2ea043; box-shadow: 0 0 15px rgba(63, 185, 80, 0.4); }
+
+        .btn-export {
+            display: inline-flex; align-items: center; gap: 8px; margin-top: 8px;
+            color: var(--neon-blue); text-decoration: none; font-size: 0.75rem;
+            border: 1px solid var(--neon-blue); padding: 5px 12px; border-radius: 4px;
+        }
+        .btn-export:hover { background: var(--neon-blue); color: white; }
 
         .pulse { height: 10px; width: 10px; background: var(--neon-green); border-radius: 50%; display: inline-block; animation: blink 1.5s infinite; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .blink-red { animation: blink 0.8s infinite; color: var(--neon-red); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>AGENTSPHERE</h1>
+    <div class="header">
+        <h1><i class="fas fa-shield-halved"></i> AGENTSPHERE COMMAND</h1>
+        <p style="color: #8b949e; font-size: 0.9rem; margin-top: 8px;">Multi-Agent Autonomous Defense Orchestration</p>
+    </div>
 
-    <div class="panel">
-        <h2><span class="pulse"></span> LIVE TRAFFIC MONITORING</h2>
+    {% if sos_alerts %}
+    <div class="panel sos-panel">
+        <h2 style="color: var(--neon-orange);"><i class="fas fa-triangle-exclamation blink-red"></i> EMERGENCY SOS OVERRIDE QUEUE</h2>
         <table>
             <thead>
-                <tr><th>IP ADDRESS</th><th>USERNAME</th><th>ACTIVITY</th><th>STATUS</th></tr>
+                <tr><th>User Identity</th><th>Timestamp</th><th>System State</th><th>Orchestrator Action</th></tr>
+            </thead>
+            <tbody>
+                {% for sos in sos_alerts %}
+                <tr>
+                    <td><b style="color: white;">{{ sos.user }}</b></td>
+                    <td class="ai-reasoning">{{ sos.timestamp }}</td>
+                    <td>
+                        <span class="status-{{ sos.status.lower() }}">
+                            <i class="fas fa-hourglass-half"></i> {{ sos.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if sos.status == "PENDING" %}
+                        <a href="/approve_sos/{{ sos.id }}" class="btn-approve">
+                            <i class="fas fa-unlock"></i> APPROVE & ADAPT AI
+                        </a>
+                        {% else %}
+                        <span class="status-success"><i class="fas fa-check-circle"></i> USER RESTORED</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="panel">
+        <h2><span class="pulse"></span> REAL-TIME NETWORK TELEMETRY</h2>
+        <table>
+            <thead>
+                <tr><th>Source IP</th><th>Username</th><th>Activity Signature</th><th>Outcome</th><th>Timestamp</th></tr>
             </thead>
             <tbody>
                 {% for row in monitor %}
                 <tr>
-                    <td>{{ row.ip_address }}</td>
+                    <td style="font-family: 'Courier New', monospace; color: var(--neon-blue);">{{ row.ip_address }}</td>
                     <td><b>{{ row.username }}</b></td>
                     <td>{{ row.activity }}</td>
-                    <td class="status-{{ row.status | lower }}">{{ row.status }}</td>
+                    <td>
+                        <span class="status-{{ row.status.lower() }}">
+                            {{ row.status }}
+                        </span>
+                    </td>
+                    <td style="font-size: 0.75rem; color: #8b949e;">{{ row.timestamp }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <div class="panel" style="border-left: 5px solid var(--neon-blue);">
-        <h2>AI DEFENSE REASONING AGENT</h2>
+    <div class="panel" style="border-left: 4px solid var(--neon-blue);">
+        <h2><i class="fas fa-microchip"></i> AGENTIC REASONING & DECISION LOGS</h2>
         <table>
             <thead>
-                <tr><th>USER</th><th>RISK</th><th>AI AGENT REASONING</th><th>ACTION TAKEN</th></tr>
+                <tr><th>Target</th><th>Risk Level</th><th>Multi-Agent Technical Verdict</th><th>Defense Execution</th></tr>
             </thead>
             <tbody>
                 {% for row in defense %}
                 <tr>
-                    <td>{{ row.username }}</td>
-                    <td class="risk-score">{{ row.risk_score }}%</td>
-                    <td class="ai-reasoning">"{{ row.ai_reasoning }}"</td>
-                    <td><span class="status-{{ row.action_taken | lower }}">{{ row.action_taken }}</span></td>
+                    <td><b>{{ row.username }}</b></td>
+                    <td class="risk-score {% if row.risk_score >= 80 %}risk-high{% else %}risk-low{% endif %}">
+                        {% if row.risk_score >= 80 %}<i class="fas fa-radiation blink-red"></i>{% endif %}
+                        {{ row.risk_score | int }}%
+                    </td>
+                    <td class="ai-reasoning">
+                        {% if "GEOFENCE" in row.ai_reasoning %}
+                            <span class="forensic-tag"><i class="fas fa-globe-americas"></i> GEOSPATIAL VIOLATION</span><br>
+                        {% elif "VELOCITY" in row.ai_reasoning or "transfers" in row.ai_reasoning %}
+                            <span class="forensic-tag" style="border-color: var(--neon-orange); color: var(--neon-orange); background: rgba(255,153,51,0.1);"><i class="fas fa-bolt"></i> VELOCITY THRESHOLD EXCEEDED</span><br>
+                        {% elif "BOLA" in row.ai_reasoning %}
+                            <span class="forensic-tag"><i class="fas fa-fingerprint"></i> ID TAMPERING (BOLA)</span><br>
+                        {% elif "BRUTE FORCE" in row.ai_reasoning %}
+                            <span class="forensic-tag"><i class="fas fa-key"></i> CREDENTIAL STUFFING DETECTED</span><br>
+                        {% endif %}
+
+                        "{{ row.ai_reasoning }}"
+                        <br>
+                        <a href="/download_forensic/{{ row.log_id }}" class="btn-export">
+                            <i class="fas fa-file-shield"></i> DOWNLOAD AI-SIGNED AUDIT TRAIL
+                        </a>
+                    </td>
+                    <td>
+                        <span class="status-{{ row.action_taken.lower() }}">
+                            <i class="fas {% if row.action_taken == 'Blocked' %}fa-ban{% else %}fa-check-double{% endif %}"></i> 
+                            {{ row.action_taken }}
+                        </span>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -73,6 +184,14 @@
     </div>
 </div>
 
-<script>setTimeout(() => location.reload(), 5000);</script>
+<script>
+     function manualRefresh() {
+    console.log("🔄 Manual Security Pulse Triggered...");
+    location.reload();
+}
+</script>
+
 </body>
 </html>
+
+

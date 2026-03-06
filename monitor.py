@@ -7,42 +7,49 @@ class MonitoringAgent:
 
     def log_event(self, ip_address, username, activity, status):
         """
-        Records specific event status (Allowed, Blocked, Failed) into 'security_logs'.
-        This history allows the AI to see patterns of behavior.
+        Records event status. 
+        TIP: Use status 'Pending' for start of actions and 'Success/Blocked' for ends.
         """
+        db = None
         try:
             db = mysql.connector.connect(**self.db_config)
             cursor = db.cursor()
             
-            # Using 'timestamp' to match your database schema perfectly
-            query = """
-                INSERT INTO security_logs (ip_address, username, activity, status) 
-                VALUES (%s, %s, %s, %s)
-            """
-            # Status values will now be: 'Allowed', 'Blocked', 'Failure', 'Success'
-            values = (ip_address, username, activity, status)
+            # Use MySQL's NOW() for database consistency, or Python's for display
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             
-            cursor.execute(query, values)
+            query = """
+                INSERT INTO security_logs (ip_address, username, activity, status, timestamp) 
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(query, (ip_address, username, activity, status, current_time))
             db.commit()
             
             log_id = cursor.lastrowid
-            cursor.close()
-            db.close()
             
-            print(f"🕵️ [MONITOR] Event Logged | {username} | {activity} | Status: {status}")
+            # Console Icons for visibility
+            icons = {"Success": "✅", "Blocked": "🚫", "Pending": "⏳", "Failure": "❌", "BOLA": "🕵️"}
+            icon = icons.get(status, "ℹ️")
+            
+            print(f"{icon} [MONITOR] {username} | {activity} | {status}")
             return log_id
             
         except Exception as e:
             print(f"❌ [MONITOR ERROR]: {e}")
             return None
+        finally:
+            if db and db.is_connected():
+                db.close()
 
-# Database Configuration
-db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "root", 
-    "database": "techathon_bank"
-}
+    def get_live_stats(self):
+        """Helper for the Dashboard to see total blocks vs total logins."""
+        db = mysql.connector.connect(**self.db_config)
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT status, COUNT(*) as count FROM security_logs GROUP BY status")
+        stats = cursor.fetchall()
+        db.close()
+        return stats
 
-# Global instance for your Bank App to import
+# Global instance
+db_config = {"host": "localhost", "user": "root", "password": "root", "database": "techathon_bank"}
 sentry = MonitoringAgent(db_config)

@@ -1,145 +1,243 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Bank of India | Digital Banking</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank of India | Autonomous AI Banking</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --boi-blue: #003366; --boi-orange: #ff9933; --bg: #f4f7f6; --danger: #dc3545; --warning: #ffc107; }
+        :root { 
+            --boi-blue: #003366; --boi-orange: #ff9933; --bg: #f4f7f6; 
+            --danger: #dc3545; --success: #28a745; --white: #ffffff;
+        }
+        
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
         .header { background: var(--boi-blue); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid var(--boi-orange); }
-        .main-container { display: flex; flex: 1; }
-        .sidebar { width: 250px; background: white; border-right: 1px solid #ddd; padding: 20px 0; }
-        .sidebar a { display: block; padding: 15px 25px; color: var(--boi-blue); text-decoration: none; font-weight: 600; transition: 0.3s; }
-        .sidebar a:hover { background: #f0f4f8; border-left: 5px solid var(--boi-orange); }
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 260px; background: var(--white); border-right: 1px solid #ddd; padding: 20px 0; display: flex; flex-direction: column; }
+        .sidebar a { display: block; padding: 15px 25px; color: var(--boi-blue); text-decoration: none; font-weight: 600; transition: 0.3s; border-left: 5px solid transparent; cursor: pointer; }
+        .sidebar a:hover, .sidebar a.active { background: #f0f4f8; border-left: 5px solid var(--boi-orange); }
         .content { flex: 1; padding: 40px; overflow-y: auto; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 800px; margin-bottom: 20px; }
-        .balance-box { background: linear-gradient(135deg, #003366, #00509e); color: white; padding: 25px; border-radius: 15px; margin: 20px 0; }
+        .card { background: var(--white); padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 800px; margin: auto; }
+        .balance-box { background: linear-gradient(135deg, #003366, #00509e); color: white; padding: 25px; border-radius: 15px; margin: 20px 0; text-align: center; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        label { font-weight: 600; color: var(--boi-blue); font-size: 0.9rem; }
+        .btn { background: var(--boi-blue); color: white; padding: 14px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.3s; text-align: center; display: block; text-decoration: none; }
+        .ip-badge { background: #e9ecef; padding: 4px 10px; border-radius: 50px; font-family: monospace; font-size: 0.85rem; color: #495057; border: 1px solid #ced4da; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        th { color: #666; font-size: 0.8rem; text-transform: uppercase; }
-        .btn { background: var(--boi-blue); color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        
-        /* Security Alert Styles */
-        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; text-align: center; }
-        .alert-danger { background-color: var(--danger); color: white; border: 1px solid #bd2130; }
-        .alert-warning { background-color: var(--warning); color: #856404; border: 1px solid #ffeeba; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
+        .status-danger { color: var(--danger); font-weight: bold; }
+        .blocked-card { border: 2px solid var(--danger); text-align: center; padding: 50px; }
+        .blocked-icon { font-size: 4rem; color: var(--danger); margin-bottom: 20px; }
     </style>
 </head>
 <body>
+
     <div class="header">
-        <h1>BANK OF INDIA</h1>
-        {% if session.user_id %} <span>Welcome, <b>{{ session.username }}</b></span> {% endif %}
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <i class="fas fa-university fa-2x"></i>
+            <h1 style="margin: 0; font-size: 1.5rem;">BANK OF INDIA</h1>
+        </div>
+        {% if session.username %} 
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span class="ip-badge"><i class="fas fa-network-wired"></i> {{ session.ip }}</span>
+                <span>Welcome, <b>{{ session.username }}</b></span> 
+            </div>
+        {% endif %}
     </div>
 
     <div class="main-container">
-        {% if view != 'login' and view != 'register' %}
+        {% if view in ['dashboard', 'statement'] %}
         <div class="sidebar">
-            <a href="/dashboard">🏠 Dashboard</a>
-            <a href="/statement">📜 Account Statement</a>
-            <a href="/logout">🚪 Secure Logout</a>
+            <a href="/dashboard" class="{{ 'active' if view == 'dashboard' else '' }}"><i class="fas fa-columns"></i> &nbsp; Dashboard</a>
+            <a href="/statement" class="{{ 'active' if view == 'statement' else '' }}"><i class="fas fa-file-invoice-dollar"></i> &nbsp; Statement</a>
+            
+            <a onclick="runBotAttack()" style="color: var(--boi-orange); margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+                <i class="fas fa-robot"></i> &nbsp; <b>Run Bot Attack</b>
+            </a>
+            
+            <div style="margin-top: auto; padding-bottom: 20px;">
+                <a href="/logout" style="color: var(--danger);"><i class="fas fa-sign-out-alt"></i> &nbsp; Logout</a>
+            </div>
         </div>
         {% endif %}
 
         <div class="content">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-              {% if messages %}
-                {% for category, message in messages %}
-                  <div class="alert alert-{{ 'danger' if category == 'danger' else 'warning' }}">
-                    {{ message }}
-                  </div>
-                {% endfor %}
-              {% endif %}
-            {% endwith %}
+            
+           {% if view == 'login' %}
+<div style="display: flex; flex-direction: column; align-items: center; gap: 20px; margin-top: 50px;">
+    
+    <div class="card" style="width: 400px; margin: 0;">
+        <h2 style="text-align: center; color: var(--boi-blue);">Customer Login</h2>
+        <form action="/login" method="POST" id="loginForm">
+            <label>Username</label>
+            <input type="text" name="username" id="loginUser" required>
+            <label>Password</label>
+            <input type="password" name="password" id="loginPass" required>
+            <button type="submit" class="btn">Sign In Securely</button>
+        </form>
+        <p style="text-align: center; margin-top: 20px;">
+            New User? <a href="/register_page">Register here</a>
+        </p>
+    </div>
 
-            {% if view == 'login' %}
-            <div class="card" style="margin: auto; width: 350px;">
-                <h2 style="color: var(--boi-blue)">Login</h2>
-                <form action="/login" method="POST">
-                    <input type="text" name="username" placeholder="Username" required>
-                    <input type="password" name="password" placeholder="Password" required>
-                    <button type="submit" class="btn">Sign In</button>
-                </form>
-                <p>New user? <a href="/register">Register here</a></p>
-            </div>
+    <div class="card" style="width: 400px; border: 2px dashed var(--boi-orange); background: #fffaf5;">
+        <h3 style="margin-top: 0; color: #856404;"><i class="fas fa-microchip"></i> Agent Training Lab</h3>
+        <p style="font-size: 0.85rem; color: #666;">Simulate a **Brute Force Attack** using random usernames every 2 seconds to trigger Agent 1 & 2.</p>
+        
+        <div id="simStatus" style="font-weight: bold; margin-bottom: 10px; color: var(--boi-blue);">Status: Idle</div>
+        
+        <button onclick="startLoginSimulation()" class="btn" style="background: var(--boi-orange);" id="simBtn">
+            <i class="fas fa-play"></i> Start Brute Force Simulation
+        </button>
+    </div>
+</div>
+
+<script>
+    async function startLoginSimulation() {
+    const users = ["admin", "user123", "root", "guest", "test_user", "attacker_6"];
+    const status = document.getElementById('simStatus');
+    const ipBadge = document.querySelector('.ip-badge');
+
+    for (let i = 0; i < users.length; i++) {
+        status.innerHTML = `Attempting [${i+1}/6]: <span style="color:red">${users[i]}</span>`;
+        
+        const formData = new URLSearchParams();
+        formData.append('username', users[i]);
+        formData.append('password', "wrong_pass");
+
+        const response = await fetch('/login', {
+            method: 'POST',
+            body: formData,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+
+        // If the AI blocks (usually on the 4th or 5th attempt)
+        if (response.status === 403 || response.url.includes('blocked')) {
+            status.innerHTML = `<b style="color:orange">AI BLOCKED IP! Resetting for new attempt...</b>`;
+            
+            // Wait 2 seconds to show the "IP Change" 
+            await new Promise(r => setTimeout(r, 2000));
+            
+            // Reloading will trigger get_session_ip() which is now empty, 
+            // generating a brand new IP for the next phase.
+            window.location.reload(); 
+            return;
+        }
+
+        await new Promise(r => setTimeout(r, 1500));
+    }
+}
+</script>
 
             {% elif view == 'register' %}
-            <div class="card" style="margin: auto; width: 400px;">
-                <h2 style="color: var(--boi-blue)">Join Bank of India</h2>
+            <div class="card" style="width: 450px;">
+                <h2 style="text-align: center; color: var(--boi-blue);">Open New Account</h2>
                 <form action="/register" method="POST">
-                    <input type="text" name="acc_no" placeholder="Account Number" required>
-                    <input type="text" name="username" placeholder="Username" required>
-                    <input type="password" name="password" placeholder="Password" required>
-                    <input type="text" name="phone" placeholder="Phone Number" required>
-                    <button type="submit" class="btn">Create Account</button>
+                    <label>Account Number</label>
+                    <input type="text" name="account_no" placeholder="11-digit Number" required>
+                    <label>Full Name</label>
+                    <input type="text" name="username" required>
+                    <label>Phone</label>
+                    <input type="text" name="phone" placeholder="+91" required>
+                    <label>Secure Password</label>
+                    <input type="password" name="password" required>
+                    <label>Initial Balance (₹)</label>
+                    <input type="number" name="balance" value="10000">
+                    <button type="submit" class="btn" style="background: var(--boi-orange);">Create Account</button>
                 </form>
             </div>
 
             {% elif view == 'dashboard' %}
             <div class="card">
                 <h2>Account Summary</h2>
-                <p>A/C Holder: <b>{{ user.username }}</b> | Account No: <b>{{ user.account_number }}</b></p>
                 <div class="balance-box">
-                    <span>Available Balance</span>
-              <h1 style="margin: 10px 0;">₹ {{ "{:,.2f}".format(user.balance | default(0)) }}</h1>
+                    <span style="opacity: 0.8;">Available Balance</span>
+                    <h1 style="margin: 10px 0; font-size: 2.5rem;">₹ {{ "{:,.2f}".format(user.balance) }}</h1>
+                    <small>Acc: {{ user.account_number }}</small>
                 </div>
 
-                <h3>Quick Transfer</h3>
-                <form action="/transfer" method="POST" id="transferForm">
-                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
-                        <input type="text" name="description" placeholder="Recipient/Description" required>
-                        <input type="number" name="amount" id="amountInput" placeholder="Amount" required>
-                    </div>
-                    
-                    <label style="font-weight: bold; font-size: 0.9rem;">Current Transaction Location:</label>
-                    <select name="location" id="locationSelect" required>
-                        <option value="India">🇮🇳 India (Local)</option>
-                        <option value="USA">🇺🇸 USA (International - Restricted)</option>
-                    </select>
+                <div style="background: #fff9e6; border: 1px solid #ffe58f; padding: 25px; border-radius: 12px;">
+                    <h3><i class="fas fa-paper-plane"></i> Quick Transfer</h3>
+                    <form action="/transfer" method="POST" id="transferForm">
+                        <input type="hidden" name="sender_id" value="{{ user.id }}">
 
-                    <button type="submit" class="btn" style="margin-top: 10px;">Authorize Transfer</button>
-                </form>
+                        <div style="display: flex; gap: 15px;">
+                            <div style="flex: 2;"><label>Recipient</label><input type="text" name="receiver" required></div>
+                            <div style="flex: 1;"><label>Amount (₹)</label><input type="number" name="amount" required></div>
+                        </div>
+
+                        <label>Transfer Region</label>
+                        <select name="location">
+                            <option value="India">Domestic (Trusted)</option>
+                            <option value="USA">International (🚩 Geofence Trigger)</option>
+                        </select>
+                        <button type="submit" class="btn" style="background: var(--success);">Confirm Transfer</button>
+                    </form>
+                </div>
             </div>
 
             {% elif view == 'statement' %}
             <div class="card">
                 <h2>Transaction History</h2>
                 <table>
-                    <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th></tr></thead>
+                    <thead><tr><th>Timestamp</th><th>Recipient</th><th>Amount</th></tr></thead>
                     <tbody>
                         {% for t in transactions %}
                         <tr>
                             <td>{{ t.timestamp }}</td>
-                            <td>{{ t.description }}</td>
-                           <td class="text-{{ t.type|lower }}">
-    {{ t.type }}
-</td>
-                                {{ t.type }}
-                            </td>
-                            <td>₹{{ "{:,.2f}".format(t.amount) }}</td>
+                            <td>{{ t.receiver }}</td>
+                            <td class="status-danger">- ₹{{ t.amount }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+
+            {% elif view == 'blocked' %}
+            <div class="card blocked-card">
+                <i class="fas fa-shield-virus blocked-icon"></i>
+                <h1 style="color: var(--danger);">Access Suspended</h1>
+                <p><b>AgentSphere AI</b> has detected a security policy violation (Velocity/Geofence/BOLA).</p>
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+                <button onclick="sendSOS()" class="btn" style="background: var(--boi-orange);">
+                    <i class="fas fa-bell"></i> Send Emergency SOS
+                </button>
+                <a href="/logout" style="display: block; margin-top: 20px; color: #666;">Return to Login</a>
+            </div>
             {% endif %}
+
         </div>
     </div>
 
     <script>
-        const transferForm = document.getElementById('transferForm');
-        if (transferForm) {
-            transferForm.onsubmit = function(e) {
-                const amount = document.getElementById('amountInput').value;
-                const location = document.getElementById('locationSelect').value;
+        // 🚩 AGENT 5: BOT/VELOCITY SIMULATION
+        async function runBotAttack() {
+            if(!confirm("Start automated Bot Attack (5 rapid transfers)?")) return;
+            
+            for(let i=0; i<5; i++) {
+                console.log(`Bot request ${i+1}...`);
+                await fetch('/transfer', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'sender_id={{user.id if user else 0}}&amount=10&receiver=BotTarget&location=India'
+                });
+            }
+            alert("Bot requests sent. Refreshing to check AI status...");
+            location.reload();
+        }
 
-                if (location === "USA") {
-                    return confirm("🚨 SECURITY ALERT: Initiating a transfer from a restricted international region (USA) will lead to an immediate Account Block for safety. Do you want to proceed?");
-                }
-
-                if (parseFloat(amount) > 50000) {
-                    alert("ℹ️ Large Transaction: Transfers over ₹50,000 are subject to AI Security Audit.");
-                }
-            };
+        // 🚩 AGENT 6: RECOVERY SOS
+        async function sendSOS() {
+            const res = await fetch('http://127.0.0.1:5001/sos_alert', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    user: "{{ session.username }}", 
+                    reason: "User claims false positive on automated block."
+                })
+            });
+            if(res.ok) alert("SOS Sent! The AI Orchestrator has received your request.");
         }
     </script>
 </body>
