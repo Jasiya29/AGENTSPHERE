@@ -99,43 +99,60 @@ def login():
 def transfer():
     if 'user_id' not in session: return redirect(url_for('home'))
     
-    # 🚩 AGENT 3: BOLA CHECK (Broken Object Level Authorization)
-    # If the user tampered with the hidden 'sender_id' in HTML
-    claimed_id = int(request.form.get('sender_id', 0))
     actual_id = session['user_id']
+    username = session['username']
+    
+    # 🚩 AGENT 3: BOLA CHECK
+    claimed_id = int(request.form.get('sender_id', 0))
     is_bola_attack = (claimed_id != actual_id)
     
     amt = float(request.form.get('amount', 0))
     receiver = request.form.get('receiver', 'Unknown')
     location = request.form.get('location', 'India')
     
-    # 🚩 AGENT 4 & 5: Geofencing & Frequency (Velocity)
+    # 🚩 CALL AI ORCHESTRATOR (Agents 4, 5, & Strategy Coordinator)
     try:
-        res = requests.post(AI_AGENT_URL, json={
-            "user": session['username'], 
+        # Note: We send "Transfer" as the activity so the AI knows to check tx_count
+        response = requests.post(AI_AGENT_URL, json={
+            "user": username, 
             "ip": session['ip'], 
             "activity": "Transfer",
             "amount": amt,
             "geo_block": True if location == "USA" else False,
             "bola_attack": is_bola_attack
-        }).json()
+        }, timeout=3)
+        
+        res_data = response.json()
 
-        if res.get('decision') == 'Blocked':
-            # Update DB to lock the user
-            db = get_db(); cursor = db.cursor()
+        if res_data.get('decision') == 'Blocked':
+            # 🚩 ENFORCEMENT: Lock the account in DB
+            db = get_db()
+            cursor = db.cursor()
             cursor.execute("UPDATE users SET status='blocked' WHERE id=%s", (actual_id,))
-            return render_template('bank.html', view='blocked')
-    except:
-        pass
+            db.commit()
+            
+            # Pass the AI's specific reasoning to the blocked page
+            return render_template('blocked.html', 
+                                 view='blocked', 
+                                 reason=res_data.get('reason'))
+                                 
+    except Exception as e:
+        print(f"⚠️ AI Agent Offline: {e}")
+        # Optional: You could implement a local fallback here if AI is down
 
-    # Process Transaction if not blocked
+    # 💰 PROCESS TRANSACTION (Only if not blocked)
     db = get_db()
     cursor = db.cursor()
+    
+    # Check balance and deduct
     cursor.execute("UPDATE users SET balance = balance - %s WHERE id=%s AND balance >= %s", (amt, actual_id, amt))
     
     if cursor.rowcount > 0:
+        # Insert into transactions table
+        # Ensure your table columns match: (sender_id, receiver, amount) or (sender, receiver, amount)
         cursor.execute("INSERT INTO transactions (sender, receiver, amount) VALUES (%s, %s, %s)", 
-                       (session['username'], receiver, amt))
+                       (username, receiver, amt))
+        db.commit()
         return redirect(url_for('dashboard'))
     
     return "Insufficient balance or transfer error."
